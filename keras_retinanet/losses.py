@@ -15,8 +15,43 @@ limitations under the License.
 """
 
 import keras
+import tensorflow as tf
+# slim = tf.contrib.slim
 from . import backend
 
+class MultiLoss() :
+    def __init__(self, loss_list):
+        self.lost_list = loss_list
+        self._sigmas = []
+        for i in range(len(self.lost_list)):
+            self._sigmas.append(tf.Variable(dtype=tf.float32, name="sigma_sq_"+str(i),
+                                            initial_value=tf.random_uniform_initializer(minval=0.2, maxval=1)
+                                                .__call__(shape=[], dtype=tf.float32)))
+            # self._sigmas.append(keras.backend.variable(dtype='float32', name="sigma_sq_"+str(i), value=[]))
+
+
+    def get_loss(self, y_true, y_pred):
+        factor = 1.0/(2.0*self._sigmas[0])
+        loss = (factor * self.lost_list[0](y_true, y_pred)) + keras.backend.log(self._sigmas[0])
+        for i in range(1, len(self._sigmas)):
+            factor = 1.0 / 2.0 * self._sigmas[i]
+            loss = loss + (factor*self.lost_list[i](y_true, y_pred)) + keras.backend.log(self._sigmas[i])
+        return loss
+
+# class MultiLossLayer():
+#     def __init__(self, loss_list):
+#         self._loss_list = loss_list
+#         self._sigmas_sq = []
+#         for i in range(len(self._loss_list)):
+#             self._sigmas_sq.append(slim.variable('Sigma_sq_' + str(i), dtype=tf.float32, shape=[], initializer=tf.initializers.random_uniform(minval=0.2, maxval=1)))
+#
+#     def get_loss(self):
+#         factor = tf.div(1.0, tf.multiply(2.0, self._sigmas_sq[0]))
+#         loss = tf.add(tf.multiply(factor, self._loss_list[0]), tf.log(self._sigmas_sq[0]))
+#         for i in range(1, len(self._sigmas_sq)):
+#             factor = tf.div(1.0, tf.multiply(2.0, self._sigmas_sq[i]))
+#             loss = tf.add(loss, tf.add(tf.multiply(factor, self._loss_list[i]), tf.log(self._sigmas_sq[i])))
+#         return loss
 
 def focal(alpha=0.25, gamma=2.0):
     """ Create a functor for computing the focal loss.
@@ -62,9 +97,11 @@ def focal(alpha=0.25, gamma=2.0):
         normalizer = keras.backend.cast(keras.backend.shape(normalizer)[0], keras.backend.floatx())
         normalizer = keras.backend.maximum(keras.backend.cast_to_floatx(1.0), normalizer)
 
-        return keras.backend.sum(cls_loss) / normalizer
+        return keras.backend.sum(cls_loss)/normalizer
+        # return MultiLoss([keras.backend.sum(cls_loss) / normalizer]).get_loss()
 
-    return _focal
+    multiLoss = MultiLoss([_focal])
+    return multiLoss.get_loss, multiLoss
 
 
 def smooth_l1(sigma=3.0):
@@ -112,6 +149,9 @@ def smooth_l1(sigma=3.0):
         # compute the normalizer: the number of positive anchors
         normalizer = keras.backend.maximum(1, keras.backend.shape(indices)[0])
         normalizer = keras.backend.cast(normalizer, dtype=keras.backend.floatx())
-        return keras.backend.sum(regression_loss) / normalizer
 
-    return _smooth_l1
+        return keras.backend.sum(regression_loss)/normalizer
+        # return MultiLoss([keras.backend.sum(regression_loss) / normalizer]).get_loss()
+
+    loss_class = MultiLoss([_smooth_l1])
+    return loss_class.get_loss, loss_class
