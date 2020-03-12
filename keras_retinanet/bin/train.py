@@ -120,8 +120,9 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     # compile model
     regression_loss, loss_class_reg = losses.smooth_l1()
     classification_loss, loss_class_cl = losses.focal()
-    training_model.layers[-1].trainable_weights.append(loss_class_cl.lost_list[0])
-    training_model.layers[-1].trainable_weights.append(loss_class_reg.lost_list[0])
+
+    # training_model.layers[-1].trainable_weights.append(loss_class_cl)
+    # training_model.layers[-1].trainable_weights.append(loss_class_reg)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
