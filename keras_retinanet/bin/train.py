@@ -460,7 +460,7 @@ def main(args=None):
 
     # optionally choose specific GPU
     print("use gpu: ", args.gpu)
-    if args.gpu:
+    if args.gpu is not None:
         setup_gpu(args.gpu)
 
     # optionally load config parameters
