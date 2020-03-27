@@ -27,7 +27,7 @@ def setup_gpu(gpu_id):
             return
 
         gpus = tf.config.experimental.list_physical_devices('GPU')
-        print("count gpus: ", len(gpus))
+        print("count gpus: ", gpus)
         if gpus:
             # Restrict TensorFlow to only use the first GPU.
             try:
