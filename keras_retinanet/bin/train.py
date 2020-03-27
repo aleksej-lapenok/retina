@@ -459,6 +459,7 @@ def main(args=None):
     check_tf_version()
 
     # optionally choose specific GPU
+    print("use gpu: ", args.gpu)
     if args.gpu:
         setup_gpu(args.gpu)
 

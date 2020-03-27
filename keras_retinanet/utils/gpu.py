@@ -22,10 +22,12 @@ from .tf_version import tf_version_ok
 def setup_gpu(gpu_id):
     if tf_version_ok((2, 0, 0)):
         if gpu_id == 'cpu' or gpu_id == -1:
+            print("use cpu for learning")
             tf.config.experimental.set_visible_devices([], 'GPU')
             return
 
         gpus = tf.config.experimental.list_physical_devices('GPU')
+        print("count gpus: ", gpus.len())
         if gpus:
             # Restrict TensorFlow to only use the first GPU.
             try:
@@ -45,8 +47,10 @@ def setup_gpu(gpu_id):
         import os
         if gpu_id == 'cpu' or gpu_id == -1:
             os.environ['CUDA_VISIBLE_DEVICES'] = ""
+            print("use cpu with cuda")
             return
 
+        print("use gpu with cuda")
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         config = tf.ConfigProto(per_process_gpu_memory_fraction=0.7)
         config.gpu_options.allow_growth = True
