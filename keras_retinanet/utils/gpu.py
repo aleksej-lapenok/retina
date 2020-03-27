@@ -27,8 +27,9 @@ def setup_gpu(gpu_id):
             return
 
         gpus = tf.config.experimental.list_physical_devices('GPU')
-        print("count gpus: ", gpus)
+        print("Num GPUs:", len(gpus))
         if gpus:
+            print("found gpues")
             # Restrict TensorFlow to only use the first GPU.
             try:
                 # Currently, memory growth needs to be the same across GPUs.
