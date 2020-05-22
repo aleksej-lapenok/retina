@@ -114,13 +114,15 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
         model          = model_with_weights(backbone_retinanet(num_classes, num_anchors=num_anchors, modifier=modifier), weights=weights, skip_mismatch=True)
         training_model = model
 
+    regression_loss, loss_class_reg = losses.smooth_l1()
+    classification_loss, loss_class_cl = losses.focal()
+
+    model.layers[-1].trainable_weights.append(loss_class_reg)
+    model.layers[-1].trainable_weights.append(loss_class_cl)
     # make prediction model
     prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
 
     # compile model
-    regression_loss, loss_class_reg = losses.smooth_l1()
-    classification_loss, loss_class_cl = losses.focal()
-
     # training_model.layers[-1].trainable_weights.append(loss_class_cl)
     # training_model.layers[-1].trainable_weights.append(loss_class_reg)
     training_model.compile(
@@ -131,10 +133,10 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
         optimizer=keras.optimizers.adam(lr=lr, clipnorm=0.001)
     )
 
-    return model, training_model, prediction_model
+    return model, training_model, prediction_model, [loss_class_reg, loss_class_cl]
 
 
-def create_callbacks(model, training_model, prediction_model, validation_generator, args):
+def create_callbacks(model, training_model, prediction_model, validation_generator, args, sigmas):
     """ Creates the callbacks to use during training.
 
     Args
@@ -203,6 +205,14 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         cooldown   = 0,
         min_lr     = 0
     ))
+
+    if len(sigmas) != 0:
+        sigma_names = [sigma.name for sigma in sigmas]
+        from ..callbacks.eval import SigmasLog
+        callbacks.append(
+            SigmasLog(count_mode='steps',
+                      stateful_metrics=model.metrics_names[1:] + sigma_names,
+                      sigmas=sigmas))
 
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
@@ -479,6 +489,7 @@ def main(args=None):
         if args.config and 'anchor_parameters' in args.config:
             anchor_params = parse_anchor_parameters(args.config)
         prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
+        sigmas = []
     else:
         weights = args.weights
         # default to imagenet if nothing else is specified
@@ -486,7 +497,7 @@ def main(args=None):
             weights = backbone.download_imagenet()
 
         print('Creating model, this may take a second...')
-        model, training_model, prediction_model = create_models(
+        model, training_model, prediction_model, sigmas = create_models(
             backbone_retinanet=backbone.retinanet,
             num_classes=train_generator.num_classes(),
             weights=weights,
@@ -512,6 +523,7 @@ def main(args=None):
         prediction_model,
         validation_generator,
         args,
+        sigmas
     )
 
     if not args.compute_val_loss:
@@ -522,7 +534,7 @@ def main(args=None):
         generator=train_generator,
         steps_per_epoch=args.steps,
         epochs=args.epochs,
-        verbose=1,
+        verbose=0,
         callbacks=callbacks,
         workers=args.workers,
         use_multiprocessing=args.multiprocessing,

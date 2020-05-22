@@ -10,6 +10,8 @@ class Backbone(object):
         from .. import layers
         from .. import losses
         from .. import initializers
+        regression_loss, loss_class_reg = losses.smooth_l1()
+        classification_loss, loss_class_cl = losses.focal()
         self.custom_objects = {
             'UpsampleLike'     : layers.UpsampleLike,
             'PriorProbability' : initializers.PriorProbability,
@@ -17,8 +19,10 @@ class Backbone(object):
             'FilterDetections' : layers.FilterDetections,
             'Anchors'          : layers.Anchors,
             'ClipBoxes'        : layers.ClipBoxes,
-            '_smooth_l1'       : losses.smooth_l1()[0],
-            '_focal'           : losses.focal()[0],
+            '_smooth_l1'       : regression_loss,
+            '_focal'           : classification_loss,
+            # '_loss_class_cl'   : loss_class_cl,
+            # '_loss_class_reg'  : loss_class_reg
         }
 
         self.backbone = backbone
