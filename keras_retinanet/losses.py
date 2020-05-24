@@ -75,8 +75,8 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         # compute the focal loss
         alpha_factor = keras.backend.ones_like(labels) * alpha
         alpha_factor = backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
-        focal_weight = backend.where(keras.backend.equal(labels, 1), 1 - classification / (sigma_var ** 2),
-                                     classification / (sigma_var ** 2))
+        focal_weight = backend.where(keras.backend.equal(labels, 1), 1 - classification,
+                                     classification)
         focal_weight = alpha_factor * focal_weight ** gamma
 
         cross_entropy = keras.backend.binary_crossentropy(labels, classification) / (sigma_var ** 2) + keras.backend.log(sigma_var)
