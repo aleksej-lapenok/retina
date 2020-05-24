@@ -114,17 +114,18 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
         model          = model_with_weights(backbone_retinanet(num_classes, num_anchors=num_anchors, modifier=modifier), weights=weights, skip_mismatch=True)
         training_model = model
 
-    regression_loss, loss_class_reg = losses.smooth_l1()
-    classification_loss, loss_class_cl = losses.focal()
-
-    model.layers[-1].trainable_weights.append(loss_class_reg)
-    model.layers[-1].trainable_weights.append(loss_class_cl)
+    sigma_sq_focal = training_model.add_weight(dtype=tf.float32, name='sigma_sq_focal',
+                                         initializer=tf.random_uniform_initializer(minval=0.2, maxval=1),
+                                         trainable=True)
+    sigma_sq_smoth_l1 = training_model.add_weight(dtype=tf.float32, name='sigma_sq_smoth_l1',
+                                         initializer=tf.random_uniform_initializer(minval=0.2, maxval=1),
+                                         trainable=True)
+    regression_loss, loss_class_reg = losses.smooth_l1(sigma_var=sigma_sq_smoth_l1)
+    classification_loss, loss_class_cl = losses.focal(sigma_var=sigma_sq_focal)
     # make prediction model
     prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
 
     # compile model
-    # training_model.layers[-1].trainable_weights.append(loss_class_cl)
-    # training_model.layers[-1].trainable_weights.append(loss_class_reg)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
@@ -133,7 +134,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
         optimizer=keras.optimizers.adam(lr=lr, clipnorm=0.001)
     )
 
-    return model, training_model, prediction_model, [loss_class_reg, loss_class_cl]
+    return model, training_model, prediction_model, [sigma_sq_focal, sigma_sq_smoth_l1]
 
 
 def create_callbacks(model, training_model, prediction_model, validation_generator, args, sigmas):

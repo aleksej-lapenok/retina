@@ -35,7 +35,7 @@ from . import backend
 #             loss = tf.add(loss, tf.add(tf.multiply(factor, self._loss_list[i]), tf.log(self._sigmas_sq[i])))
 #         return loss
 
-def focal(alpha=0.25, gamma=2.0):
+def focal(alpha=0.25, gamma=2.0, sigma_var=None):
     """ Create a functor for computing the focal loss.
 
     Args
@@ -45,9 +45,9 @@ def focal(alpha=0.25, gamma=2.0):
     Returns
         A functor that computes the focal loss using the alpha and gamma.
     """
-    sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_focal",
-                            initial_value=tf.random_uniform_initializer(minval=0.2, maxval=1)
-                            .__call__(shape=[], dtype=tf.float32))
+    if sigma_var is None:
+        sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_focal",
+                                trainable=True)
 
     def _focal(y_true, y_pred):
         """ Compute the focal loss given the target tensor and the predicted tensor.
@@ -94,7 +94,7 @@ def focal(alpha=0.25, gamma=2.0):
     return _focal, sigma_var
 
 
-def smooth_l1(sigma=3.0):
+def smooth_l1(sigma=3.0, sigma_var=None):
     """ Create a smooth L1 loss functor.
 
     Args
@@ -105,9 +105,9 @@ def smooth_l1(sigma=3.0):
     """
     sigma_squared = sigma ** 2
 
-    sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_smoth_l1",
-                            initial_value=tf.random_uniform_initializer(minval=0.2, maxval=1)
-                            .__call__(shape=[], dtype=tf.float32))
+    if sigma_var is None:
+        sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_smoth_l1",
+                                trainable=True)
 
     def _smooth_l1(y_true, y_pred):
         """ Compute the smooth L1 loss of y_pred w.r.t. y_true.
