@@ -47,6 +47,8 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
     """
     if sigma_var is None:
         sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_focal",
+                                initial_value=tf.random_uniform_initializer(minval=0.2, maxval=1)
+                                .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
     def _focal(y_true, y_pred):
@@ -107,6 +109,8 @@ def smooth_l1(sigma=3.0, sigma_var=None):
 
     if sigma_var is None:
         sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_smoth_l1",
+                                initial_value=tf.random_uniform_initializer(minval=0.2, maxval=1)
+                                .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
     def _smooth_l1(y_true, y_pred):
