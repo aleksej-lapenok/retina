@@ -131,7 +131,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=keras.optimizers.SGD(learning_rate=2.5E-3, momentum=0.9, decay=104,
+        optimizer=keras.optimizers.SGD(learning_rate=2.5E-3, momentum=0.9, decay=1E4,
                                        nesterov=True)
     )
 
