@@ -55,6 +55,7 @@ class CocoEval(keras.callbacks.Callback):
         if coco_eval_stats is not None:
             for index, result in enumerate(coco_eval_stats):
                 logs[coco_tag[index]] = result
+                print('{} = {}', coco_tag[index], result)
 
             if self.tensorboard:
                 import tensorflow as tf
