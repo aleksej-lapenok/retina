@@ -115,11 +115,11 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
         training_model = model
 
     sigma_sq_focal = training_model.add_weight(dtype=tf.float32, name='sigma_sq_focal',
-                                         initializer=tf.random_uniform_initializer(minval=0.6, maxval=1),
-                                         trainable=True)
+                                               initializer=tf.random_uniform_initializer(minval=-2, maxval=5),
+                                               trainable=True)
     sigma_sq_smoth_l1 = training_model.add_weight(dtype=tf.float32, name='sigma_sq_smoth_l1',
-                                         initializer=tf.random_uniform_initializer(minval=0.6, maxval=1),
-                                         trainable=True)
+                                                  initializer=tf.random_uniform_initializer(minval=-2, maxval=5),
+                                                  trainable=True)
     regression_loss, loss_class_reg = losses.smooth_l1(sigma_var=sigma_sq_smoth_l1)
     classification_loss, loss_class_cl = losses.focal(sigma_var=sigma_sq_focal)
     # make prediction model
@@ -131,7 +131,8 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=keras.optimizers.adam(lr=lr, clipnorm=0.001)
+        optimizer=keras.optimizers.SGD(learning_rate=2.5E-3, momentum=0.9, decay=104,
+                                       nesterov=True)
     )
 
     return model, training_model, prediction_model, [sigma_sq_focal, sigma_sq_smoth_l1]

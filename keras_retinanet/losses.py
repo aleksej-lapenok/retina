@@ -47,7 +47,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
     """
     if sigma_var is None:
         sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_focal",
-                                initial_value=tf.random_uniform_initializer(minval=0.6, maxval=1)
+                                initial_value=tf.random_uniform_initializer(minval=-2, maxval=5)
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
@@ -75,11 +75,11 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         # compute the focal loss
         alpha_factor = keras.backend.ones_like(labels) * alpha
         alpha_factor = backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
-        focal_weight = backend.where(keras.backend.equal(labels, 1), 1 - classification,
-                                     classification)
+        focal_weight = backend.where(keras.backend.equal(labels, 1), 1 - classification * keras.backend.exp(-sigma_var),
+                                     classification * keras.backend.exp(-sigma_var))
         focal_weight = alpha_factor * focal_weight ** gamma
 
-        cross_entropy = keras.backend.binary_crossentropy(labels, classification) / (sigma_var ** 2) + keras.backend.log(sigma_var)
+        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-sigma_var) + sigma_var
 
         cls_loss = focal_weight * cross_entropy
 
@@ -109,7 +109,7 @@ def smooth_l1(sigma=3.0, sigma_var=None):
 
     if sigma_var is None:
         sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_smoth_l1",
-                                initial_value=tf.random_uniform_initializer(minval=0.6, maxval=1)
+                                initial_value=tf.random_uniform_initializer(minval=-2, maxval=5)
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
@@ -148,8 +148,8 @@ def smooth_l1(sigma=3.0, sigma_var=None):
         normalizer = keras.backend.maximum(1, keras.backend.shape(indices)[0])
         normalizer = keras.backend.cast(normalizer, dtype=keras.backend.floatx())
 
-        factor = 1.0 / (2.0 * sigma_var * sigma_var)
-        return factor * (keras.backend.sum(regression_loss) / normalizer) + keras.backend.log(sigma_var)
+        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var))
+        return factor * (keras.backend.sum(regression_loss) / normalizer) + 0.5 * sigma_var
         # return MultiLoss([keras.backend.sum(regression_loss) / normalizer]).get_loss()
 
     # loss_class = MultiLoss([_smooth_l1])
