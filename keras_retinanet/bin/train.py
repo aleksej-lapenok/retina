@@ -126,6 +126,8 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
 
     # compile model
+    training_model.add_metric(loss_class_reg, name='sigma_smoth_l1')
+    training_model.add_metric(loss_class_cl, name='sigma_focal')
     training_model.compile(
         loss={
             'regression'    : regression_loss,
@@ -135,10 +137,10 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                                        nesterov=True)
     )
 
-    return model, training_model, prediction_model, [sigma_sq_focal, sigma_sq_smoth_l1]
+    return model, training_model, prediction_model
 
 
-def create_callbacks(model, training_model, prediction_model, validation_generator, args, sigmas):
+def create_callbacks(model, training_model, prediction_model, validation_generator, args):
     """ Creates the callbacks to use during training.
 
     Args
@@ -207,14 +209,6 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         cooldown   = 0,
         min_lr     = 0
     ))
-
-    if len(sigmas) != 0:
-        sigma_names = [sigma.name for sigma in sigmas]
-        from ..callbacks.eval import SigmasLog
-        callbacks.append(
-            SigmasLog(count_mode='steps',
-                      stateful_metrics=model.metrics_names[1:] + sigma_names,
-                      sigmas=sigmas))
 
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
@@ -491,7 +485,6 @@ def main(args=None):
         if args.config and 'anchor_parameters' in args.config:
             anchor_params = parse_anchor_parameters(args.config)
         prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
-        sigmas = []
     else:
         weights = args.weights
         # default to imagenet if nothing else is specified
@@ -499,7 +492,7 @@ def main(args=None):
             weights = backbone.download_imagenet()
 
         print('Creating model, this may take a second...')
-        model, training_model, prediction_model, sigmas = create_models(
+        model, training_model, prediction_model = create_models(
             backbone_retinanet=backbone.retinanet,
             num_classes=train_generator.num_classes(),
             weights=weights,
@@ -524,8 +517,7 @@ def main(args=None):
         training_model,
         prediction_model,
         validation_generator,
-        args,
-        sigmas
+        args
     )
 
     if not args.compute_val_loss:
@@ -536,7 +528,7 @@ def main(args=None):
         generator=train_generator,
         steps_per_epoch=args.steps,
         epochs=args.epochs,
-        verbose=0,
+        verbose=1,
         callbacks=callbacks,
         workers=args.workers,
         use_multiprocessing=args.multiprocessing,

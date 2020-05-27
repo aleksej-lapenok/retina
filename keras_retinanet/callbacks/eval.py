@@ -96,31 +96,3 @@ class Evaluate(keras.callbacks.Callback):
 
         if self.verbose == 1:
             print('mAP: {:.4f}'.format(self.mean_ap))
-
-
-class SigmasLog(keras.callbacks.ProgbarLogger):
-    def __init__(self, sigmas, count_mode='samples',
-                 stateful_metrics=None):
-        super(SigmasLog, self).__init__(count_mode, stateful_metrics)
-        self.sigmas = sigmas
-        self.sigmas_names = [sigma.name for sigma in sigmas]
-
-    def set_params(self, params):
-        params['metrics'] = params['metrics'] + self.sigmas_names
-        keras.callbacks.ProgbarLogger.set_params(self, params)
-
-    def on_train_begin(self, logs=None):
-        keras.callbacks.ProgbarLogger.on_train_begin(self, logs)
-        self.verbose = 1
-
-    def on_batch_end(self, batch, logs=None):
-        logs = logs or {}
-        for sigma in self.sigmas:
-            logs[sigma.name] = keras.backend.get_value(sigma)
-        keras.callbacks.ProgbarLogger.on_batch_end(self, batch, logs)
-
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
-        for sigma in self.sigmas:
-            logs[sigma.name] = keras.backend.get_value(sigma)
-        keras.callbacks.ProgbarLogger.on_epoch_end(self, epoch, logs)
