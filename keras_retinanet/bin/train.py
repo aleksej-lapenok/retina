@@ -128,18 +128,18 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     # compile model
     training_model.add_metric(loss_class_reg, name='sigma_smoth_l1')
     training_model.add_metric(loss_class_cl, name='sigma_focal')
-    lerning_rate = tf.keras.optimizers.schedules.PolynomialDecay(
-        initial_learning_rate=2.5E-3,
-        decay_steps=10000,
-        power=0.9,
-        cycle=True
-    )
+    # lerning_rate = tf.keras.optimizers.schedules.PolynomialDecay(
+    #     initial_learning_rate=2.5E-3,
+    #     decay_steps=10000,
+    #     power=0.9,
+    #     cycle=True
+    # )
     training_model.compile(
         loss={
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=tf.keras.optimizers.SGD(learning_rate=lerning_rate, momentum=0.9, nesterov=True)
+        optimizer=keras.optimizers.adam(lr=lr, clipnorm=0.001)
     )
 
     return model, training_model, prediction_model
