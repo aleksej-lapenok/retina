@@ -118,11 +118,12 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
         if save_path is not None:
             selection = np.where(image_scores > score_threshold)[0]
             for i in selection:
+                b = np.array(image_boxes[i, :]).astype(int)
                 result['path'].append(image_path)
-                result['x1'].append(image_boxes[i, 0])
-                result['y1'].append(image_boxes[i, 1])
-                result['x2'].append(image_boxes[i, 2])
-                result['y2'].append(image_boxes[i, 3])
+                result['x1'].append(b[i, 0])
+                result['y1'].append(b[i, 1])
+                result['x2'].append(b[i, 2])
+                result['y2'].append(b[i, 3])
                 result['class'].append(image_labels[i])
             # draw_annotations(raw_image, generator.load_annotations(i), label_to_name=generator.label_to_name)
             # draw_detections(raw_image, image_boxes, image_scores, image_labels, label_to_name=generator.label_to_name, score_threshold=score_threshold)
