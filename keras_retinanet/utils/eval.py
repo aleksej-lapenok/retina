@@ -21,6 +21,7 @@ import keras
 import numpy as np
 import os
 import time
+import pandas as pd
 
 import cv2
 import progressbar
@@ -74,10 +75,19 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
     all_detections = [[None for i in range(generator.num_classes()) if generator.has_label(i)] for j in range(generator.size())]
     all_inferences = [None for i in range(generator.size())]
 
+    result = {'path':[],
+              'x1':[],
+              'y1':[],
+              'x2':[],
+              'y2':[],
+              'class':[]}
+
     for i in progressbar.progressbar(range(generator.size()), prefix='Running network: '):
         raw_image    = generator.load_image(i)
         image        = generator.preprocess_image(raw_image.copy())
         image, scale = generator.resize_image(image)
+
+        image_path = generator.image_path(i)
 
         if keras.backend.image_data_format() == 'channels_first':
             image = image.transpose((2, 0, 1))
@@ -106,10 +116,19 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
         image_detections = np.concatenate([image_boxes, np.expand_dims(image_scores, axis=1), np.expand_dims(image_labels, axis=1)], axis=1)
 
         if save_path is not None:
-            draw_annotations(raw_image, generator.load_annotations(i), label_to_name=generator.label_to_name)
-            draw_detections(raw_image, image_boxes, image_scores, image_labels, label_to_name=generator.label_to_name, score_threshold=score_threshold)
+            selection = np.where(scores > score_threshold)[0]
+            for i in selection:
+                result['path'].append(image_path)
+                result['x1'].append(boxes[i,0])
+                result['y1'].append(boxes[i,1])
+                result['x2'].append(boxes[i,2])
+                result['y2'].append(boxes[i,3])
+                result['class'].append(labels[i])
+            # draw_annotations(raw_image, generator.load_annotations(i), label_to_name=generator.label_to_name)
+            # draw_detections(raw_image, image_boxes, image_scores, image_labels, label_to_name=generator.label_to_name, score_threshold=score_threshold)
 
-            cv2.imwrite(os.path.join(save_path, '{}.png'.format(i)), raw_image)
+
+            # cv2.imwrite(os.path.join(save_path, '{}.png'.format(i)), raw_image)
 
         # copy detections to all_detections
         for label in range(generator.num_classes()):
@@ -119,6 +138,11 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
             all_detections[i][label] = image_detections[image_detections[:, -1] == label, :-1]
 
         all_inferences[i] = inference_time
+
+        if save_path:
+            df = pd.DataFrame(result)
+            df.to_csv(save_path, sep=',', index=False, header=None)
+
 
     return all_detections, all_inferences
 
