@@ -125,7 +125,7 @@ def main(args=None):
 
     # make save path if it doesn't exist
     if args.save_path_image is not None and not os.path.exists(args.save_path_image):
-        os.makedirs(args.save_path)
+        os.makedirs(args.save_path_image)
 
     # optionally load config parameters
     if args.config:
