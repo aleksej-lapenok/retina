@@ -21,6 +21,7 @@ import keras
 import numpy as np
 import os
 import time
+import pandas as pd
 
 import cv2
 import progressbar
@@ -56,7 +57,7 @@ def _compute_ap(recall, precision):
     return ap
 
 
-def _get_detections(generator, model, score_threshold=0.05, max_detections=100, save_path=None):
+def _get_detections(generator, model, score_threshold=0.05, max_detections=100, save_path=None, save_path_image=None):
     """ Get the detections from the model using the generator.
 
     The result is a list of lists such that the size is:
@@ -74,10 +75,19 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
     all_detections = [[None for i in range(generator.num_classes()) if generator.has_label(i)] for j in range(generator.size())]
     all_inferences = [None for i in range(generator.size())]
 
+    result = {'path':[],
+              'x1':[],
+              'y1':[],
+              'x2':[],
+              'y2':[],
+              'class':[]}
+
     for i in progressbar.progressbar(range(generator.size()), prefix='Running network: '):
         raw_image    = generator.load_image(i)
         image        = generator.preprocess_image(raw_image.copy())
         image, scale = generator.resize_image(image)
+
+        image_path = generator.image_path(i)
 
         if keras.backend.image_data_format() == 'channels_first':
             image = image.transpose((2, 0, 1))
@@ -106,10 +116,19 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
         image_detections = np.concatenate([image_boxes, np.expand_dims(image_scores, axis=1), np.expand_dims(image_labels, axis=1)], axis=1)
 
         if save_path is not None:
+            selection = np.where(image_scores > score_threshold)[0]
+            for j in selection:
+                b = np.array(image_boxes[j, :]).astype(int)
+                result['path'].append(image_path)
+                result['x1'].append(b[0])
+                result['y1'].append(b[1])
+                result['x2'].append(b[2])
+                result['y2'].append(b[3])
+                result['class'].append(image_labels[j])
+        if save_path_image is not None:
             draw_annotations(raw_image, generator.load_annotations(i), label_to_name=generator.label_to_name)
             draw_detections(raw_image, image_boxes, image_scores, image_labels, label_to_name=generator.label_to_name, score_threshold=score_threshold)
-
-            cv2.imwrite(os.path.join(save_path, '{}.png'.format(i)), raw_image)
+            cv2.imwrite(os.path.join(save_path_image, '{}.png'.format(i)), raw_image)
 
         # copy detections to all_detections
         for label in range(generator.num_classes()):
@@ -119,6 +138,11 @@ def _get_detections(generator, model, score_threshold=0.05, max_detections=100, 
             all_detections[i][label] = image_detections[image_detections[:, -1] == label, :-1]
 
         all_inferences[i] = inference_time
+
+        if save_path:
+            df = pd.DataFrame(result)
+            df.to_csv(save_path, sep=',', index=False, header=None)
+
 
     return all_detections, all_inferences
 
@@ -156,7 +180,8 @@ def evaluate(
     iou_threshold=0.5,
     score_threshold=0.05,
     max_detections=100,
-    save_path=None
+    save_path=None,
+    save_path_image=None
 ):
     """ Evaluate a given dataset using a given model.
 
@@ -171,7 +196,7 @@ def evaluate(
         A dict mapping class names to mAP scores.
     """
     # gather all detections and annotations
-    all_detections, all_inferences = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
+    all_detections, all_inferences = _get_detections(generator, model, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path, save_path_image=save_path_image)
     all_annotations    = _get_annotations(generator)
     average_precisions = {}
 
