@@ -51,6 +51,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
+    var = sigma_var
     sigma_var = sigma_var ** 2
 
     def _focal(y_true, y_pred):
@@ -95,7 +96,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
 
     # multiLoss = MultiLoss([_focal])
     # return multiLoss.get_loss, multiLoss
-    return _focal, sigma_var
+    return _focal, var
 
 
 def smooth_l1(sigma=3.0, sigma_var=None):
@@ -115,6 +116,7 @@ def smooth_l1(sigma=3.0, sigma_var=None):
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
+    var = sigma_var
     sigma_var = sigma_var ** 2
 
     def _smooth_l1(y_true, y_pred):
@@ -158,4 +160,4 @@ def smooth_l1(sigma=3.0, sigma_var=None):
 
     # loss_class = MultiLoss([_smooth_l1])
     # return loss_class.get_loss, loss_class
-    return _smooth_l1, sigma_var
+    return _smooth_l1, var
