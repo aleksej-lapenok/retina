@@ -51,6 +51,8 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
+    sigma_var = sigma_var ** 2
+
     def _focal(y_true, y_pred):
         """ Compute the focal loss given the target tensor and the predicted tensor.
 
