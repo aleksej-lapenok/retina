@@ -16,6 +16,7 @@ limitations under the License.
 
 import keras
 import tensorflow as tf
+
 # slim = tf.contrib.slim
 from . import backend
 
@@ -51,9 +52,6 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
-    var = sigma_var
-    sigma_var = keras.backend.pow(sigma_var, 2)
-
     def _focal(y_true, y_pred):
         """ Compute the focal loss given the target tensor and the predicted tensor.
 
@@ -78,11 +76,12 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         # compute the focal loss
         alpha_factor = keras.backend.ones_like(labels) * alpha
         alpha_factor = backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
-        focal_weight = backend.where(keras.backend.equal(labels, 1), 1 - classification * keras.backend.exp(-sigma_var),
-                                     classification * keras.backend.exp(-sigma_var))
+        focal_weight = backend.where(keras.backend.equal(labels, 1),
+                                     1 - classification * keras.backend.exp(- (sigma_var ** 2)),
+                                     classification * keras.backend.exp(-(sigma_var ** 2)))
         focal_weight = alpha_factor * focal_weight ** gamma
 
-        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-sigma_var) - sigma_var / 2
+        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-(sigma_var ** 2)) - (sigma_var ** 2) / 2
 
         cls_loss = focal_weight * cross_entropy
 
@@ -96,7 +95,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
 
     # multiLoss = MultiLoss([_focal])
     # return multiLoss.get_loss, multiLoss
-    return _focal, var
+    return _focal, sigma_var
 
 
 def smooth_l1(sigma=3.0, sigma_var=None):
@@ -115,9 +114,6 @@ def smooth_l1(sigma=3.0, sigma_var=None):
                                 initial_value=tf.random_uniform_initializer(minval=-2, maxval=5)
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
-
-    var = sigma_var
-    sigma_var = keras.backend.pow(sigma_var, 2)
 
     def _smooth_l1(y_true, y_pred):
         """ Compute the smooth L1 loss of y_pred w.r.t. y_true.
@@ -154,10 +150,10 @@ def smooth_l1(sigma=3.0, sigma_var=None):
         normalizer = keras.backend.maximum(1, keras.backend.shape(indices)[0])
         normalizer = keras.backend.cast(normalizer, dtype=keras.backend.floatx())
 
-        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var))
-        return factor * (keras.backend.sum(regression_loss) / normalizer) + 0.5 * sigma_var
+        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var ** 2))
+        return factor * (keras.backend.sum(regression_loss) / normalizer) + 0.5 * sigma_var ** 2
         # return MultiLoss([keras.backend.sum(regression_loss) / normalizer]).get_loss()
 
     # loss_class = MultiLoss([_smooth_l1])
     # return loss_class.get_loss, loss_class
-    return _smooth_l1, var
+    return _smooth_l1, sigma_var
