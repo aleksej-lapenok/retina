@@ -115,6 +115,8 @@ def smooth_l1(sigma=3.0, sigma_var=None):
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
+    sigma_var = sigma_var ** 2
+
     def _smooth_l1(y_true, y_pred):
         """ Compute the smooth L1 loss of y_pred w.r.t. y_true.
 
