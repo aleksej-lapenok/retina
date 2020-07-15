@@ -52,7 +52,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
                                 trainable=True)
 
     var = sigma_var
-    sigma_var = sigma_var ** 2
+    sigma_var = keras.backend.pow(sigma_var, 2)
 
     def _focal(y_true, y_pred):
         """ Compute the focal loss given the target tensor and the predicted tensor.
@@ -117,7 +117,7 @@ def smooth_l1(sigma=3.0, sigma_var=None):
                                 trainable=True)
 
     var = sigma_var
-    sigma_var = sigma_var ** 2
+    sigma_var = keras.backend.pow(sigma_var, 2)
 
     def _smooth_l1(y_true, y_pred):
         """ Compute the smooth L1 loss of y_pred w.r.t. y_true.
