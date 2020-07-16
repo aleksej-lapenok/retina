@@ -77,11 +77,11 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         alpha_factor = keras.backend.ones_like(labels) * alpha
         alpha_factor = backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
         focal_weight = backend.where(keras.backend.equal(labels, 1),
-                                     1 - classification * keras.backend.exp(- (sigma_var ** 2)),
-                                     classification * keras.backend.exp(-(sigma_var ** 2)))
+                                     1 - classification,
+                                     classification)
         focal_weight = alpha_factor * focal_weight ** gamma
 
-        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-(sigma_var ** 2)) + (sigma_var ** 2) / 2
+        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-sigma_var) - sigma_var / 2
 
         cls_loss = focal_weight * cross_entropy
 
@@ -150,8 +150,8 @@ def smooth_l1(sigma=3.0, sigma_var=None):
         normalizer = keras.backend.maximum(1, keras.backend.shape(indices)[0])
         normalizer = keras.backend.cast(normalizer, dtype=keras.backend.floatx())
 
-        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var ** 2))
-        return factor * (keras.backend.sum(regression_loss) / normalizer) + 0.5 * sigma_var ** 2
+        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var))
+        return factor * (keras.backend.sum(regression_loss) / normalizer) + 0.5 * sigma_var
         # return MultiLoss([keras.backend.sum(regression_loss) / normalizer]).get_loss()
 
     # loss_class = MultiLoss([_smooth_l1])
