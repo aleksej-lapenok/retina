@@ -140,18 +140,20 @@ def smooth_l1(sigma=3.0, sigma_var=None):
         #        |x| - 0.5 / sigma / sigma    otherwise
         regression_diff = regression - regression_target
         regression_diff = keras.backend.abs(regression_diff)
+
+        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var))
         regression_loss = backend.where(
             keras.backend.less(regression_diff, 1.0 / sigma_squared),
-            0.5 * sigma_squared * keras.backend.pow(regression_diff, 2),
-            regression_diff - 0.5 / sigma_squared
+            factor * 0.5 * sigma_squared * keras.backend.pow(regression_diff, 2) + 0.5 * sigma_var,
+            keras.backend.sqrt(2) * (regression_diff - 0.5 / sigma_squared) / sigma_var -
+            keras.backend.log(1 / (keras.backend.sqrt(2) * sigma_var))
         )
 
         # compute the normalizer: the number of positive anchors
         normalizer = keras.backend.maximum(1, keras.backend.shape(indices)[0])
         normalizer = keras.backend.cast(normalizer, dtype=keras.backend.floatx())
 
-        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var))
-        return factor * (keras.backend.sum(regression_loss) / normalizer) + 0.5 * sigma_var
+        return keras.backend.sum(regression_loss) / normalizer
         # return MultiLoss([keras.backend.sum(regression_loss) / normalizer]).get_loss()
 
     # loss_class = MultiLoss([_smooth_l1])
