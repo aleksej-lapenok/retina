@@ -146,7 +146,7 @@ def smooth_l1(sigma=3.0, sigma_var=None):
         regression_loss = backend.where(
             keras.backend.less(regression_diff, 1.0 / sigma_squared),
             factor * sigma_squared * keras.backend.pow(regression_diff, 2) + 0.5 * sigma_var,
-            np.sqrt(2) * (regression_diff - 0.5 / sigma_squared) / keras.backend.sqrt(sigma_var) + 0.5 * sigma_var
+            np.sqrt(2) * (regression_diff - 0.5 / sigma_squared) / keras.backend.sqrt(keras.backend.exp(sigma_var)) + 0.5 * sigma_var
         )
 
         # compute the normalizer: the number of positive anchors
