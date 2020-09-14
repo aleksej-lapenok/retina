@@ -49,7 +49,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
     """
     if sigma_var is None:
         sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_focal",
-                                initial_value=tf.random_uniform_initializer(minval=-2, maxval=5)
+                                initial_value=tf.constant_initializer(1)
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
@@ -78,8 +78,8 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         alpha_factor = keras.backend.ones_like(labels) * alpha
         alpha_factor = backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
         focal_weight = backend.where(keras.backend.equal(labels, 1),
-                                     1 - classification * keras.backend.exp(-keras.backend.pow(sigma_var, 2)),
-                                     1 - (1 - classification) * keras.backend.exp(-keras.backend.pow(sigma_var, 2)))
+                                     1 - classification * keras.backend.exp(-1.5 * keras.backend.pow(sigma_var, 2)),
+                                     1 - (1 - classification) * keras.backend.exp(-1.5 * keras.backend.pow(sigma_var, 2)))
         focal_weight = alpha_factor * focal_weight ** gamma
 
         cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-keras.backend.pow(sigma_var, 2)) + keras.backend.pow(sigma_var, 2) / 2
@@ -112,7 +112,7 @@ def smooth_l1(sigma=3.0, sigma_var=None):
 
     if sigma_var is None:
         sigma_var = tf.Variable(dtype=tf.float32, name="sigma_sq_smoth_l1",
-                                initial_value=tf.random_uniform_initializer(minval=-2, maxval=5)
+                                initial_value=tf.constant_initializer(1)
                                 .__call__(shape=[], dtype=tf.float32),
                                 trainable=True)
 
