@@ -50,6 +50,7 @@ from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
+from ..bin.learning_rate_schedulers import PolynomialDecay
 
 
 def makedirs(path):
@@ -77,7 +78,7 @@ def model_with_weights(model, weights, skip_mismatch):
 
 
 def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
-                  freeze_backbone=False, lr=1e-5, config=None):
+                  freeze_backbone=False, lr=1e-5, config=None, epochs=100):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -139,7 +140,8 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=keras.optimizers.adam(lr=lr, clipnorm=0.001)
+        optimizer=keras.optimizers.SGD(lr=2.5e-3, momentum=0.9, nesterov=True),
+
     )
 
     return model, training_model, prediction_model
@@ -218,6 +220,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
 
+    callbacks.append(keras.callbacks.LearningRateScheduler(PolynomialDecay(args.epochs), verbose=1))
     return callbacks
 
 
@@ -504,7 +507,8 @@ def main(args=None):
             multi_gpu=args.multi_gpu,
             freeze_backbone=args.freeze_backbone,
             lr=args.lr,
-            config=args.config
+            config=args.config,
+            epochs=args.epochs
         )
 
     # print model summary
