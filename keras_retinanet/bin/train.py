@@ -220,7 +220,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
 
-    callbacks.append(keras.callbacks.LearningRateScheduler(PolynomialDecay(args.epochs), verbose=1))
+    callbacks.append(keras.callbacks.LearningRateScheduler(PolynomialDecay(args.epochs, initAlpha=args.lr), verbose=1))
     return callbacks
 
 
