@@ -1,6 +1,6 @@
 
 class PolynomialDecay:
-    def __init__(self, maxEpochs=100, initAlpha=2.5e-3, power=0.9):
+    def __init__(self, maxEpochs=100, initAlpha=2.5e-3, power=0.5):
         self.maxEpochs = maxEpochs
         self.initAlpha = initAlpha
         self.power = power

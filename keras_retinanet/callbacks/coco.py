@@ -66,3 +66,5 @@ class CocoEval(keras.callbacks.Callback):
                         summary_value.simple_value = result
                         summary_value.tag = '{}. {}'.format(index + 1, coco_tag[index])
                         self.tensorboard.writer.add_summary(summary, epoch)
+        else:
+            print('Can\'t show coco results: coco_eval_stats is None')
