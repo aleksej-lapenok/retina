@@ -37,6 +37,8 @@ from .. import losses
 from .. import models
 from ..callbacks import RedirectModel
 from ..callbacks.eval import Evaluate
+from ..callbacks.LRFinder import LRFinder
+from ..callbacks.SGDRScheduler import SGDRScheduler
 from ..models.retinanet import retinanet_bbox
 from ..preprocessing.csv_generator import CSVGenerator
 from ..preprocessing.kitti import KittiGenerator
@@ -220,7 +222,12 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
 
-    callbacks.append(keras.callbacks.LearningRateScheduler(PolynomialDecay(args.epochs, initAlpha=args.lr), verbose=1))
+    # callbacks.append(LRFinder(max_lr=args.lr, min_lr=args.lr / 10000, steps_per_epoch=args.steps, epochs=args.epochs))
+    callbacks.append(SGDRScheduler(min_lr=1e-30, max_lr=args.lr, steps_per_epoch=args.steps,
+                                   lr_decay=PolynomialDecay(args.epochs),
+                                   cycle_length=args.epochs / 10,
+                                   mult_factor=1.5))
+    # callbacks.append(keras.callbacks.LearningRateScheduler(PolynomialDecay(args.epochs, initAlpha=args.lr), verbose=1))
     return callbacks
 
 
