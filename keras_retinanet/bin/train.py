@@ -223,7 +223,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         callbacks.append(tensorboard_callback)
 
     # callbacks.append(LRFinder(max_lr=args.lr, min_lr=args.lr / 10000, steps_per_epoch=args.steps, epochs=args.epochs))
-    callbacks.append(SGDRScheduler(min_lr=1e-30, max_lr=args.lr, steps_per_epoch=args.steps,
+    callbacks.append(SGDRScheduler(min_lr=args.lr / 100000, max_lr=args.lr, steps_per_epoch=args.steps,
                                    lr_decay=PolynomialDecay(args.epochs),
                                    cycle_length=5,
                                    mult_factor=1))
