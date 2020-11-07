@@ -53,6 +53,7 @@ from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
 from ..bin.learning_rate_schedulers import PolynomialDecay
+from ..utils.AdamW import AdamW
 
 
 def makedirs(path):
@@ -80,7 +81,10 @@ def model_with_weights(model, weights, skip_mismatch):
 
 
 def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
-                  freeze_backbone=False, lr=1e-5, config=None, epochs=100):
+                  freeze_backbone=False, lr=1e-5, config=None,
+                  batch_size=2,
+                  epochs=100,
+                  steps_by_epochs=1000):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -142,7 +146,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=keras.optimizers.SGD(lr=lr, momentum=0.9, nesterov=True),
+        optimizer=AdamW(lr=lr, weight_decay=1e-4, batch_size=batch_size, epochs=epochs, samples_per_epoch=steps_by_epochs),
 
     )
 
@@ -223,10 +227,10 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         callbacks.append(tensorboard_callback)
 
     # callbacks.append(LRFinder(max_lr=args.lr, min_lr=args.lr / 10000, steps_per_epoch=args.steps, epochs=args.epochs))
-    callbacks.append(SGDRScheduler(min_lr=args.lr / 100000, max_lr=args.lr, steps_per_epoch=args.steps,
-                                   lr_decay=PolynomialDecay(args.epochs),
-                                   cycle_length=5,
-                                   mult_factor=1))
+    # callbacks.append(SGDRScheduler(min_lr=args.lr / 100000, max_lr=args.lr, steps_per_epoch=args.steps,
+    #                                lr_decay=PolynomialDecay(args.epochs),
+    #                                cycle_length=5,
+    #                                mult_factor=1))
     # callbacks.append(keras.callbacks.LearningRateScheduler(PolynomialDecay(args.epochs, initAlpha=args.lr), verbose=1))
     return callbacks
 
@@ -515,7 +519,9 @@ def main(args=None):
             freeze_backbone=args.freeze_backbone,
             lr=args.lr,
             config=args.config,
-            epochs=args.epochs
+            epochs=args.epochs,
+            batch_size=args.batch_size,
+            steps_by_epochs=args.steps
         )
 
     # print model summary
