@@ -85,7 +85,8 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                   batch_size=2,
                   epochs=100,
                   steps_by_epochs=1000,
-                  decay=0.0000125):
+                  decay=0.0000125,
+                  weight_decay=0.):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -147,7 +148,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=AdamW(lr=lr, weight_decay=1e-4, batch_size=batch_size, epochs=epochs, samples_per_epoch=steps_by_epochs,
+        optimizer=AdamW(lr=lr, weight_decay=weight_decay, batch_size=batch_size, epochs=epochs, samples_per_epoch=steps_by_epochs,
                         decay=decay),
 
     )
@@ -464,6 +465,7 @@ def parse_args(args):
     parser.add_argument('--weighted-average', help='Compute the mAP using the weighted average of precisions among classes.', action='store_true')
     parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss', action='store_true')
     parser.add_argument("--decay",            help='decay', type=float, default=0.)
+    parser.add_argument("--weight-decay",     help='wight-decay', type=float, default=0.)
 
     # Fit generator arguments
     parser.add_argument('--multiprocessing',  help='Use multiprocessing in fit_generator.', action='store_true')
@@ -525,7 +527,8 @@ def main(args=None):
             epochs=args.epochs,
             batch_size=args.batch_size,
             steps_by_epochs=args.steps,
-            decay=args.decay
+            decay=args.decay,
+            weight_decay=args.weight_decay
         )
 
     # print model summary
