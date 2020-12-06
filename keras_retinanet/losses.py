@@ -91,7 +91,7 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         normalizer = keras.backend.cast(keras.backend.shape(normalizer)[0], keras.backend.floatx())
         normalizer = keras.backend.maximum(keras.backend.cast_to_floatx(1.0), normalizer)
 
-        return keras.backend.sum(cls_loss) * 1e-4 / normalizer
+        return keras.backend.sum(cls_loss) * 1e-3 / normalizer
         # return MultiLoss([keras.backend.sum(cls_loss) / normalizer]).get_loss()
 
     # multiLoss = MultiLoss([_focal])
