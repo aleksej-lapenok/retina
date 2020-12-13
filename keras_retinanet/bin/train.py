@@ -24,6 +24,7 @@ import warnings
 import keras
 import keras.preprocessing.image
 import tensorflow as tf
+from keras_adamw.optimizers import AdamW
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -53,7 +54,6 @@ from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
 from ..bin.learning_rate_schedulers import PolynomialDecay
-from ..utils.AdamW import AdamW
 
 
 def makedirs(path):
@@ -82,11 +82,8 @@ def model_with_weights(model, weights, skip_mismatch):
 
 def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                   freeze_backbone=False, lr=1e-5, config=None,
-                  batch_size=2,
                   epochs=100,
-                  steps_by_epochs=1000,
-                  decay=0.0000125,
-                  weight_decay=0.):
+                  steps_by_epochs=1000):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -143,13 +140,14 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     power=0.9,
     #     cycle=True
     # )
+    optimizer = AdamW(lr=lr, model=training_model, zero_penalties=True, total_iterations=steps_by_epochs*epochs,
+                      use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
             'classification': classification_loss
         },
-        optimizer=AdamW(lr=lr, weight_decay=weight_decay, batch_size=batch_size, epochs=epochs, samples_per_epoch=steps_by_epochs,
-                        decay=decay),
+        optimizer=optimizer,
 
     )
 
@@ -217,8 +215,8 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
 
     # callbacks.append(keras.callbacks.ReduceLROnPlateau(
     #     monitor    = 'loss',
-    #     factor     = 0.1,
-    #     patience   = 2,
+    #     factor     = 0.5,
+    #     patience   = 3,
     #     verbose    = 1,
     #     mode       = 'auto',
     #     min_delta  = 0.0001,
@@ -525,10 +523,7 @@ def main(args=None):
             lr=args.lr,
             config=args.config,
             epochs=args.epochs,
-            batch_size=args.batch_size,
             steps_by_epochs=args.steps,
-            decay=args.decay,
-            weight_decay=args.weight_decay
         )
 
     # print model summary
