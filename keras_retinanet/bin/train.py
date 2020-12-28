@@ -24,7 +24,6 @@ import warnings
 import keras
 import keras.preprocessing.image
 import tensorflow as tf
-from ..optimizer import AdamW
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -53,6 +52,7 @@ from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
+from ..optimizer import AdamW
 from ..bin.learning_rate_schedulers import PolynomialDecay
 
 
