@@ -24,6 +24,7 @@ import warnings
 import keras
 import keras.preprocessing.image
 import tensorflow as tf
+import keras.metrics as metrics
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -83,7 +84,7 @@ def model_with_weights(model, weights, skip_mismatch):
 def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                   freeze_backbone=False, lr=1e-5, config=None,
                   epochs=100,
-                  steps_by_epochs=1000):
+                  steps_by_epochs=1000, weight_decay=None):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -141,8 +142,8 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     cycle=True
     # )
     optimizer = AdamW(lr=lr, model=training_model, zero_penalties=True, total_iterations=steps_by_epochs,
-                      use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True)
-    training_model.add_metric(optimizer.get_lr_t(), name='lr_t')
+                      use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True, weight_decay=(weight_decay,0))
+    # training_model.add_metric(optimizer.lr_t, name='lr_t')
     training_model.compile(
         loss={
             'regression'    : regression_loss,
@@ -525,6 +526,7 @@ def main(args=None):
             config=args.config,
             epochs=args.epochs,
             steps_by_epochs=args.steps,
+            weight_decay=args.weight_decay
         )
 
     # print model summary

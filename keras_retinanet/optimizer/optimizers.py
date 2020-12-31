@@ -76,7 +76,7 @@ class AdamW(Optimizer):
                  total_iterations=0, total_iterations_wd=None,
                  use_cosine_annealing=False, lr_multipliers=None,
                  weight_decays=None, autorestart=None, init_verbose=True,
-                 eta_min=0, eta_max=1, t_cur=0, **kwargs):
+                 eta_min=0, eta_max=1, t_cur=0, weight_decay=None, **kwargs):
         if total_iterations > 1:
             weight_decays = _init_weight_decays(model, zero_penalties,
                                                 weight_decays)
@@ -111,6 +111,8 @@ class AdamW(Optimizer):
         _check_args(self, total_iterations, use_cosine_annealing, weight_decays)
         self._init_lr = learning_rate  # to print lr_mult setup
         self._init_notified = False
+        self.weight_decay = weight_decay
+        self.model = model
 
     def get_lr_t(self):
         lr = self.learning_rate
@@ -175,6 +177,8 @@ class AdamW(Optimizer):
             self.updates.append(K.update(m, m_t))
             self.updates.append(K.update(v, v_t))
 
+            if self.weight_decay and p.name not in self.weight_decays.keys():
+                self.weight_decays[p.name] = self.weight_decay
             # Weight decays
             if p.name in self.weight_decays.keys():
                 p_t = _apply_weight_decays(self, p, p_t)
@@ -189,6 +193,9 @@ class AdamW(Optimizer):
         # Cosine annealing
         _update_t_cur_eta_t(self)
         self.lr_t = lr_t * self.eta_t  # for external tracking
+
+        if self.model:
+            self.model.add_metric(self.lr_t, name='lr_t')
 
         self._init_notified = True
         return self.updates
