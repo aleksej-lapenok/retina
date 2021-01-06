@@ -196,6 +196,7 @@ class AdamW(Optimizer):
 
         if self.model:
             self.model.add_metric(self.lr_t, name='lr_t')
+            self.model.add_metric(self.eta_t, name='eta_t')
 
         self._init_notified = True
         return self.updates
