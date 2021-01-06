@@ -84,7 +84,8 @@ def model_with_weights(model, weights, skip_mismatch):
 def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                   freeze_backbone=False, lr=1e-5, config=None,
                   epochs=100,
-                  steps_by_epochs=1000, weight_decay=None):
+                  steps_by_epochs=1000, weight_decay=None,
+                  eta_max=1, eta_min=0, t_cur=0):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -142,7 +143,10 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     cycle=True
     # )
     optimizer = AdamW(lr=lr, model=training_model, zero_penalties=True, total_iterations=steps_by_epochs,
-                      use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True, weight_decay=(weight_decay,0))
+                      use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True,
+                      weight_decay=(weight_decay, weight_decay),
+                      # clipnorm=0.001,
+                      eta_max=eta_max, eta_min=eta_min, t_cur=t_cur)
     # training_model.add_metric(optimizer.lr_t, name='lr_t')
     training_model.compile(
         loss={
@@ -466,6 +470,9 @@ def parse_args(args):
     parser.add_argument('--compute-val-loss', help='Compute validation loss during training', dest='compute_val_loss', action='store_true')
     parser.add_argument("--decay",            help='decay', type=float, default=0.)
     parser.add_argument("--weight-decay",     help='wight-decay', type=float, default=0.)
+    parser.add_argument("--eta-max",          help='eta-max', type=float, default=1.)
+    parser.add_argument("--eta-min",          help='eta-min', type=float, default=0.)
+    parser.add_argument("--t-cur",            help='t-cur', type=int, default=0)
 
     # Fit generator arguments
     parser.add_argument('--multiprocessing',  help='Use multiprocessing in fit_generator.', action='store_true')
@@ -526,7 +533,10 @@ def main(args=None):
             config=args.config,
             epochs=args.epochs,
             steps_by_epochs=args.steps,
-            weight_decay=args.weight_decay
+            weight_decay=args.weight_decay,
+            eta_max=args.eta_max,
+            eta_min=args.eta_min,
+            t_cur=args.t_cur
         )
 
     # print model summary
