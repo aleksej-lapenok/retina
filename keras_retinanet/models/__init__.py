@@ -1,5 +1,6 @@
 from __future__ import print_function
 import sys
+from keras_radam import RAdam
 
 
 class Backbone(object):
@@ -21,8 +22,9 @@ class Backbone(object):
             'ClipBoxes'        : layers.ClipBoxes,
             '_smooth_l1'       : regression_loss,
             '_focal'           : classification_loss,
-            'sigma_focal'      : loss_class_cl,
-            'sigma_smoth_l1'   : loss_class_reg
+            'RAdam'            : RAdam
+            # 'sigma_focal'      : loss_class_cl,
+            # 'sigma_smoth_l1'   : loss_class_reg
         }
 
         self.backbone = backbone

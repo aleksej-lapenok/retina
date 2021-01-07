@@ -53,7 +53,7 @@ from ..utils.keras_version import check_keras_version
 from ..utils.model import freeze as freeze_model
 from ..utils.tf_version import check_tf_version
 from ..utils.transform import random_transform_generator
-from ..optimizer import AdamW
+from keras_radam import RAdam
 from ..bin.learning_rate_schedulers import PolynomialDecay
 
 
@@ -142,12 +142,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     power=0.9,
     #     cycle=True
     # )
-    optimizer = AdamW(lr=lr, model=training_model, zero_penalties=True, total_iterations=steps_by_epochs,
-                      use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True,
-                      weight_decay=(weight_decay, weight_decay),
-                      # clipnorm=0.001,
-                      eta_max=eta_max, eta_min=eta_min, t_cur=t_cur)
-    # training_model.add_metric(optimizer.lr_t, name='lr_t')
+    optimizer = RAdam(learning_rate=lr, weight_decay=weight_decay, total_steps=steps_by_epochs * epochs)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
