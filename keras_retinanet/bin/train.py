@@ -144,7 +144,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     # )
     optimizer = AdamW(lr=lr, model=training_model, zero_penalties=True, total_iterations=steps_by_epochs,
                       use_cosine_annealing=True, autorestart=True, init_verbose=True, amsgrad=True,
-                      weight_decay=(weight_decay, weight_decay),
+                      weight_decay=(weight_decay, 0.),
                       # clipnorm=0.001,
                       eta_max=eta_max, eta_min=eta_min, t_cur=t_cur)
     # training_model.add_metric(optimizer.lr_t, name='lr_t')
@@ -219,16 +219,16 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
         checkpoint = RedirectModel(checkpoint, model)
         callbacks.append(checkpoint)
 
-    # callbacks.append(keras.callbacks.ReduceLROnPlateau(
-    #     monitor    = 'loss',
-    #     factor     = 0.1,
-    #     patience   = 2,
-    #     verbose    = 1,
-    #     mode       = 'auto',
-    #     min_delta  = 0.001,
-    #     cooldown   = 0,
-    #     min_lr     = 0
-    # ))
+    callbacks.append(keras.callbacks.ReduceLROnPlateau(
+        monitor    = 'loss',
+        factor     = 0.1,
+        patience   = 2,
+        verbose    = 1,
+        mode       = 'auto',
+        min_delta  = 0.001,
+        cooldown   = 0,
+        min_lr     = 1E-10
+    ))
 
     if args.tensorboard_dir:
         callbacks.append(tensorboard_callback)
