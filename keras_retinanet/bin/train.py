@@ -25,6 +25,7 @@ import keras
 import keras.preprocessing.image
 import tensorflow as tf
 import keras.metrics as metrics
+from keras_radam import RAdam
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
