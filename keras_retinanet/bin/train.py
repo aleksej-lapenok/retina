@@ -143,7 +143,8 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     power=0.9,
     #     cycle=True
     # )
-    optimizer = RAdam(learning_rate=lr, weight_decay=weight_decay, total_steps=steps_by_epochs * epochs)
+    optimizer = RAdam(learning_rate=lr, weight_decay=weight_decay, total_steps=steps_by_epochs * epochs,
+                      warmup_proportion=1.0/epochs)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
