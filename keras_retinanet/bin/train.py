@@ -143,8 +143,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     power=0.9,
     #     cycle=True
     # )
-    optimizer = RAdam(learning_rate=lr, weight_decay=weight_decay, total_steps=steps_by_epochs * epochs,
-                      warmup_proportion=1.0/epochs)
+    optimizer = keras.optimizers.Adam(lr=lr)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
@@ -219,7 +218,7 @@ def create_callbacks(model, training_model, prediction_model, validation_generat
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
         monitor    = 'loss',
         factor     = 0.1,
-        patience   = 2,
+        patience   = 5,
         verbose    = 1,
         mode       = 'auto',
         min_delta  = 0.001,
