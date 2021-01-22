@@ -534,7 +534,7 @@ def main(args=None):
             eta_max=args.eta_max,
             eta_min=args.eta_min,
             t_cur=args.t_cur,
-            clupnorm=args.clupnorm,
+            clipnorm=args.clipnorm,
         )
 
     # print model summary
