@@ -86,7 +86,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                   freeze_backbone=False, lr=1e-5, config=None,
                   epochs=100,
                   steps_by_epochs=1000, weight_decay=None,
-                  eta_max=1, eta_min=0, t_cur=0, clipnorm=0.001):
+                  eta_max=1, eta_min=0, t_cur=0, clipnorm=0.001, focal_alpha=0.25):
     """ Creates three models (model, training_model, prediction_model).
 
     Args
@@ -130,7 +130,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
                                                   initializer=tf.constant_initializer(1),
                                                   trainable=True)
     regression_loss, loss_class_reg = losses.smooth_l1(sigma_var=sigma_sq_smoth_l1)
-    classification_loss, loss_class_cl = losses.focal(sigma_var=sigma_sq_focal)
+    classification_loss, loss_class_cl = losses.focal(sigma_var=sigma_sq_focal, alpha=focal_alpha)
     # make prediction model
     prediction_model = retinanet_bbox(model=model, anchor_params=anchor_params)
 
@@ -143,7 +143,7 @@ def create_models(backbone_retinanet, num_classes, weights, multi_gpu=0,
     #     power=0.9,
     #     cycle=True
     # )
-    optimizer = keras.optimizers.Adam(lr=lr, clipnorm=0.001)
+    optimizer = keras.optimizers.Adam(lr=lr, clipnorm=clipnorm)
     training_model.compile(
         loss={
             'regression'    : regression_loss,
@@ -470,6 +470,7 @@ def parse_args(args):
     parser.add_argument("--eta-min",          help='eta-min', type=float, default=0.)
     parser.add_argument("--t-cur",            help='t-cur', type=int, default=0)
     parser.add_argument("--clipnorm",         help="clipnorm", type=float, default=0.001)
+    parser.add_argument("--focal-alpha",      help="focal alpha", type=float, default=0.25)
 
     # Fit generator arguments
     parser.add_argument('--multiprocessing',  help='Use multiprocessing in fit_generator.', action='store_true')
@@ -535,6 +536,7 @@ def main(args=None):
             eta_min=args.eta_min,
             t_cur=args.t_cur,
             clipnorm=args.clipnorm,
+            focal_alpha=args.focal_alpha
         )
 
     # print model summary

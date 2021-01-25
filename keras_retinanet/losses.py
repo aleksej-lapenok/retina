@@ -15,8 +15,8 @@ limitations under the License.
 """
 
 import keras
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
 # slim = tf.contrib.slim
 from . import backend
@@ -79,10 +79,12 @@ def focal(alpha=0.25, gamma=2.0, sigma_var=None):
         alpha_factor = backend.where(keras.backend.equal(labels, 1), alpha_factor, 1 - alpha_factor)
         focal_weight = backend.where(keras.backend.equal(labels, 1),
                                      1 - classification * keras.backend.exp(-1.5 * keras.backend.pow(sigma_var, 2)),
-                                     1 - (1 - classification) * keras.backend.exp(-1.5 * keras.backend.pow(sigma_var, 2)))
+                                     1 - (1 - classification) * keras.backend.exp(
+                                         -1.5 * keras.backend.pow(sigma_var, 2)))
         focal_weight = alpha_factor * focal_weight ** gamma
 
-        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(-keras.backend.pow(sigma_var, 2)) + keras.backend.pow(sigma_var, 2) / 2
+        cross_entropy = keras.backend.binary_crossentropy(labels, classification) * keras.backend.exp(
+            -keras.backend.pow(sigma_var, 2)) + keras.backend.pow(sigma_var, 2) / 2
 
         cls_loss = focal_weight * cross_entropy
 
@@ -142,11 +144,16 @@ def smooth_l1(sigma=3.0, sigma_var=None):
         regression_diff = regression - regression_target
         regression_diff = keras.backend.abs(regression_diff)
 
-        factor = 1.0 / (2.0 * keras.backend.exp(sigma_var * sigma_var))
+        factor = 1.0 / (4.0 * keras.backend.exp(sigma_var * sigma_var))
         regression_loss = backend.where(
             keras.backend.less(regression_diff, 1.0 / sigma_squared),
             factor * sigma_squared * keras.backend.pow(regression_diff, 2) + 0.5 * keras.backend.pow(sigma_var, 2),
-            np.sqrt(2) * (regression_diff - 0.5 / sigma_squared) / keras.backend.sqrt(keras.backend.exp(sigma_var * sigma_var)) + 0.5 * sigma_var * sigma_var
+
+            np.sqrt(2) * (regression_diff - 0.5 / sigma_squared) / keras.backend.sqrt(
+                keras.backend.exp(sigma_var * sigma_var)
+            ) - keras.backend.sqrt(2 / keras.backend.exp(sigma_var * sigma_var)) / sigma_squared +
+            1 / (4 * keras.backend.exp(sigma_var * sigma_var) * sigma_squared) +
+            0.5 * keras.backend.pow(sigma_var, 2)
         )
 
         # compute the normalizer: the number of positive anchors
